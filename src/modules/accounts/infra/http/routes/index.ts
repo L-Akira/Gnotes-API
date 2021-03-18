@@ -1,0 +1,1 @@
+export { default as AccountRoutes } from './accounts.routes';
