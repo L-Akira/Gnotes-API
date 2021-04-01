@@ -21,6 +21,11 @@ const port = process.env.PORT || 3333;
 app.use(routes);
 
 app.use((err: Error | any, req: Request, res: Response, _: NextFunction) => {
+  if(err.statusCode == 400)
+    return res
+      .status(err.statusCode)
+      .json({ message: ErrorMessages.BAD_REQUEST });
+
   return res
     .status(err.statusCode)
     .json({ message: ErrorMessages.INTERNAL_SERVER_ERROR });

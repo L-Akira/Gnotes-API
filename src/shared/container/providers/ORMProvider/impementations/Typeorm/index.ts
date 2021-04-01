@@ -28,6 +28,9 @@ export default class TypeormProvider implements IORMProvider {
         return this.userRepository.findAndRelate({ ...data });
     }
 
+    public async getRepeatedUser(data: ISearchUserDTO): Promise<User[]> {
+      return this.userRepository.findOcurreces({ ...data });
+    }
 
     public async createRootFolder(data: IFolderDTO): Promise<RootFolder | undefined> {
       const user = await this.getUser({
@@ -44,5 +47,14 @@ export default class TypeormProvider implements IORMProvider {
       );
 
       return this.rootFolderRepository.save(rootFolderInstance);
+    }
+
+    public async deleteUser(id: string): Promise<boolean> {
+      try {
+        this.userRepository.delete({ id });
+        return true;
+      } catch (err) {
+        return false;
+      } 
     }
 }

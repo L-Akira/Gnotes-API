@@ -10,4 +10,6 @@ router.post('/create', accountController.store);
 
 router.get('/user/:id', accountController.index);
 
+router.delete('/delete/:id', accountController.delete);
+
 export default router;

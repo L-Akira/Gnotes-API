@@ -12,20 +12,24 @@ export default class CheckExistentUser {
     ){}
 
     public async execute(search: ISearchUserDTO): Promise<boolean | ServerError> {
-        try{
-            const user = await this.ORMProvider.getUser({ 
+        try{   
+            const users = await this.ORMProvider.getRepeatedUser({
                 email: search.email,
+                username: search.username,
             });
-            
-            if(!user) {
-                const username = await this.ORMProvider.getUser({
-                    username: search.username,
-                });
-                
-                return username ? new ServerError(ErrorMessages.EXISTENT_USERNAME, 409) : true;
-            }
 
-            return new ServerError(ErrorMessages.EXISTENT_USER, 409);
+            const length = users.length;
+
+            if(length === 0)
+                return true;
+            
+            if(length === 2)
+                return new ServerError(ErrorMessages.EXISTENT_USER, 409);
+            
+            if(users[0].email === search.email)
+                return new ServerError(ErrorMessages.EXISTENT_USER, 409);
+
+            return new ServerError(ErrorMessages.EXISTENT_USERNAME, 409);
             
         } catch (err) {
             return new ServerError(`${ErrorMessages.DB_ERROR}

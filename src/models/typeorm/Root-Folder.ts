@@ -1,6 +1,6 @@
 import { Column, CreateDateColumn, Entity, JoinColumn, OneToOne, PrimaryColumn, UpdateDateColumn } from 'typeorm';
 import { User } from '@models/index';
-import { Exclude } from 'class-transformer';
+import { Exclude, Expose } from 'class-transformer';
 
 @Entity('root_folders')
 export default class RootFolder {
@@ -13,6 +13,7 @@ export default class RootFolder {
 
     @OneToOne(type => User, rootFolder => RootFolder)
     @JoinColumn({name: 'user_id', referencedColumnName: 'id'})
+    @Expose({ groups: ['getRoot'] })
     user: User;
 
     @Column('smallint')

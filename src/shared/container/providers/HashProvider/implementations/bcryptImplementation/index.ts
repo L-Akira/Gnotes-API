@@ -5,7 +5,7 @@ export default class BcryptImplementation implements IHashProvider{
     public async hash(password: string): Promise<string> {
         return bcrypt.hash(
             password,
-            10
+            Number(process.env.HASH_SALT)
         );
     }
 

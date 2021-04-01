@@ -1,22 +1,21 @@
 import { container } from 'tsyringe';
 import { Response, Request } from 'express';
-import { CheckExistentUser, CreateAccountService, CreateRootFolder, GetOneUserService } from '@modules/accounts/services';
+import { CheckExistentUser, CreateAccountService, CreateRootFolder, DeleteUser, GetOneUserService } from '@modules/accounts/services';
 import ServerError from '@shared/errors/ServerError';
 import * as yup from 'yup';
 import ErrorMesages from '@constants/ErrorMesages';
-
 export default class AccountController {
   
     public async store(request:Request, response: Response) {
         //schema validation  
-        const schema = yup.object().shape({
+        const schemaUser = yup.object().shape({
             name: yup.string().required(),
             email: yup.string().email().required(),
             username: yup.string().required(),
             password: yup.string().required(),
         });
 
-        schema.isValid({...request.body.user}).then(valid => {
+        schemaUser.isValid({...request.body.user}).then(valid => {
             if(!valid)
                 return response.status(400).json({
                     message: ErrorMesages.BAD_REQUEST,
@@ -25,8 +24,8 @@ export default class AccountController {
 
         const { name, email, username, password } = request.body.user;
         //double user prevention
-        const userExists = container.resolve(CheckExistentUser);
-        const alreadyExists = await userExists.execute({ email, username });       
+        const checkExistentUser = container.resolve(CheckExistentUser);
+        const alreadyExists = await checkExistentUser.execute({ email, username });       
 
         if (alreadyExists instanceof ServerError) {
             return response.status(alreadyExists.code).json({
@@ -46,39 +45,44 @@ export default class AccountController {
             return response.status(user.code).json({ message: user.message });
         }
         //create and attach root folder to user
-        const createFolder = container.resolve(CreateRootFolder);
-        const rootFolder = await createFolder.execute({
+        const createRootFolder = container.resolve(CreateRootFolder);
+        const rootFolder = await createRootFolder.execute({
             user_id: user.id,
         });   
 
+        if (rootFolder instanceof ServerError) {
+            return response.status(rootFolder.code).json({ message: rootFolder.message });
+        }
+
+        user.rootFolder = rootFolder;
+        
         return response.append('Token', 'null').status(201).json({ 
             data: { 
                 user,
-                rootFolder,
             }
         });
     }
-
+    
     public async index(request: Request, response: Response) {
         
-        const schemaParams = yup.object().shape({
+        const schemaId = yup.object().shape({
             id: yup.string().uuid().required(),
         });
 
-        schemaParams.validate(request.params).then(valid => {
+        schemaId.validate(request.params).then(valid => {
             if(!valid)
                 return response.status(400).json({
                     message: ErrorMesages.BAD_REQUEST,
                 });
         });
 
-        if(request.body.ensurement){
-            const schemaBody = yup.object().shape({
+        if(request.body.ensurement){            
+            const schemaEnsurement = yup.object().shape({
                 email: yup.string().email(),
                 username: yup.string(),
             });
 
-            schemaBody.validate(request.body.ensurement).then(valid => {
+            schemaEnsurement.validate({...request.body.ensurement}).then(valid => {
                 if(!valid)
                     return response.status(400).json({
                         message: ErrorMesages.BAD_REQUEST,
@@ -103,5 +107,37 @@ export default class AccountController {
                 user: result,
             }
         });       
+    }
+
+    public async delete(request: Request, response: Response) {
+        const schemaId = yup.object().shape({
+            id: yup.string().uuid().required(),
+        });
+
+        schemaId.validate(request.params).then(valid => {
+            if(!valid)
+                return response.status(400).json({
+                    message: ErrorMesages.BAD_REQUEST,
+                });
+        });
+
+        const { id } = request.params;
+        const deleteUser = container.resolve(DeleteUser);
+
+        const hasDeleted = deleteUser.execute(id);
+
+        if(hasDeleted instanceof ServerError) 
+            return response.status(hasDeleted.code).json({
+                message: hasDeleted.message,
+            });
+        
+        if(!hasDeleted)
+            return response.status(500).json({
+                message: ErrorMesages.DELETE_USER,
+            });
+
+        return response.status(200).json({
+            message: `User with id: ${id} successfully deleted`,
+        });
     }
 }

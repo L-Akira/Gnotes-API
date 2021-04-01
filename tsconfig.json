@@ -10,7 +10,8 @@
     "baseUrl": "./src",
 
     "typeRoots": [
-      "./node_modules/@types"
+      "./node_modules/@types",
+      "src/@types"
     ],
 
     "paths": {
@@ -19,7 +20,8 @@
       "@shared/*": ["shared/*"],
       "@constants/*": ["constants/*"],
       "@database/*": ["database/*"],
-      "@models/*": ["models/*"]
+      "@models/*": ["models/*"],
+      "@types/*": ["@types/*"]
     },
 
     "esModuleInterop": true,
