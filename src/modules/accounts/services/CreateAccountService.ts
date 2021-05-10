@@ -24,19 +24,9 @@ export default class CreateAccountService {
 
     public async execute(request: IUserDTO): Promise<User | ServerError> {
         request.files_quantity = request.folder_quantity = 0;
-        request.password = request.password.trim();
-
-        //Checks for password minimum requirements
-        const length = request.password.length;
-        const hasSpecial = /[~`!#$%\^&*+=\-\[\]\\';,/{}|\\":<>\?]/g.test(request.password);
-        const hasNumber = /\d/.test(request.password);
         
-        
-        if (length < 8 || !hasNumber || !hasSpecial)
-            return new ServerError(ErrorMessages.WEAK_PASSWORD, 400);
-
         try {
-            request.password  = await this.hashProvider.hash(request.password);
+            request.password  = await this.hashProvider.hash(request.password || '');
         } catch (err) {
             return new ServerError(`${ErrorMessages.CREATE_ACCOUNT_ERROR}\nDetails:${err}`, 500)
         }

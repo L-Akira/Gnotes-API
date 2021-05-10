@@ -33,11 +33,9 @@ Gnotes tries to inovate, bringing a taking note web service on cloud and local a
 The user will be able to create an account using their:
 
 - email;
-- name*;
 - username;
 - password;
 
-[*the name is just for formalities, and it is not necessary the user's real name]
 
 ### 💾 The method for saving notes
 If you are a user of Linux and/or Windows, you probably dealt with partitions, and this idea was brought up to Gnotes and it is very simple.

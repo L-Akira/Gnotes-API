@@ -1,7 +1,7 @@
 import { container } from 'tsyringe';
 import { Response, Request } from 'express';
 import * as yup from 'yup';
-import ErrorMesages from '@constants/ErrorMesages';
+import ErrorMesages from '@constants/ErrorMessages';
 import { Authentication } from '@modules/auth/services';
 import ServerError from '@shared/errors/ServerError';
 

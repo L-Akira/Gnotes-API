@@ -12,4 +12,6 @@ router.get('/user/:id', accountController.index);
 
 router.delete('/delete/:id', accountController.delete);
 
+router.patch('/update/:id', accountController.update);
+
 export default router;

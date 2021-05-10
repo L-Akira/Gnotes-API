@@ -1,15 +1,22 @@
 import { container } from 'tsyringe';
 import { Response, Request } from 'express';
-import { CheckExistentUser, CreateAccountService, CreateRootFolder, DeleteUser, GetOneUserService } from '@modules/accounts/services';
+import { 
+    CheckExistentUser, 
+    CreateAccountService, 
+    CreateRootFolder, 
+    DeleteUser, 
+    GetOneUserService, 
+    UpdateUser, 
+    VerifyPassword
+} from '@modules/accounts/services';
 import ServerError from '@shared/errors/ServerError';
 import * as yup from 'yup';
-import ErrorMesages from '@constants/ErrorMesages';
+import { ErrorMessages } from "@constants/index";
 export default class AccountController {
   
     public async store(request:Request, response: Response) {
         //schema validation  
         const schemaUser = yup.object().shape({
-            name: yup.string().required(),
             email: yup.string().email().required(),
             username: yup.string().required(),
             password: yup.string().required(),
@@ -18,11 +25,11 @@ export default class AccountController {
         schemaUser.isValid({...request.body.user}).then(valid => {
             if(!valid)
                 return response.status(400).json({
-                    message: ErrorMesages.BAD_REQUEST,
+                    message: ErrorMessages.BAD_REQUEST,
                 });
         });      
 
-        const { name, email, username, password } = request.body.user;
+        const { email, username, password } = request.body.user;
         //double user prevention
         const checkExistentUser = container.resolve(CheckExistentUser);
         const alreadyExists = await checkExistentUser.execute({ email, username });       
@@ -33,10 +40,18 @@ export default class AccountController {
             });
         }
         //user creation
-        const createAccount = container.resolve(CreateAccountService);  
+        const verifyPassword = container.resolve(VerifyPassword);
+        const checkedPassword = await verifyPassword.execute(password);
+
+        if(checkedPassword instanceof ServerError)
+            return response.status(checkedPassword.code).json({
+                message: checkedPassword.message,
+            });
+
+        const createAccount = container.resolve(CreateAccountService);
+        
         const user = await createAccount.execute({
             email,
-            name,
             password,
             username,
         });
@@ -64,15 +79,15 @@ export default class AccountController {
     }
     
     public async index(request: Request, response: Response) {
-        
+
         const schemaId = yup.object().shape({
             id: yup.string().uuid().required(),
         });
 
-        schemaId.validate(request.params).then(valid => {
+        schemaId.isValid(request.params).then(valid => {
             if(!valid)
                 return response.status(400).json({
-                    message: ErrorMesages.BAD_REQUEST,
+                    message: ErrorMessages.BAD_REQUEST,
                 });
         });
 
@@ -82,10 +97,10 @@ export default class AccountController {
                 username: yup.string(),
             });
 
-            schemaEnsurement.validate({...request.body.ensurement}).then(valid => {
+            schemaEnsurement.isValid({...request.body.ensurement}).then(valid => {
                 if(!valid)
                     return response.status(400).json({
-                        message: ErrorMesages.BAD_REQUEST,
+                        message: ErrorMessages.BAD_REQUEST,
                     });
             });   
         }
@@ -114,17 +129,17 @@ export default class AccountController {
             id: yup.string().uuid().required(),
         });
 
-        schemaId.validate(request.params).then(valid => {
+        schemaId.isValid(request.params).then(valid => {
             if(!valid)
                 return response.status(400).json({
-                    message: ErrorMesages.BAD_REQUEST,
+                    message: ErrorMessages.BAD_REQUEST,
                 });
         });
 
         const { id } = request.params;
         const deleteUser = container.resolve(DeleteUser);
 
-        const hasDeleted = deleteUser.execute(id);
+        const hasDeleted = await deleteUser.execute(id);
 
         if(hasDeleted instanceof ServerError) 
             return response.status(hasDeleted.code).json({
@@ -133,11 +148,65 @@ export default class AccountController {
         
         if(!hasDeleted)
             return response.status(500).json({
-                message: ErrorMesages.DELETE_USER,
+                message: ErrorMessages.DELETE_USER,
             });
 
         return response.status(200).json({
             message: `User with id: ${id} successfully deleted`,
         });
+    }
+
+    public async update(request: Request, response: Response) {
+        const schemaUser = yup.object().shape({
+            email: yup.string().email(),
+            username: yup.string(),
+        });
+
+        schemaUser.isValid({...request.body.user}).then(valid => {
+            if(!valid)
+                return response.status(400).json({
+                    message: ErrorMessages.BAD_REQUEST,
+                });
+        });  
+
+        const schemaId = yup.object().shape({
+            id: yup.string().uuid().required(),
+        });
+
+        schemaId.isValid(request.params).then(valid => {
+            if(!valid)
+                return response.status(400).json({
+                    message: ErrorMessages.BAD_REQUEST,
+                });
+        });
+
+        const { id } = request.params;
+        const { user } = request.body;
+
+        if(user.email || user.username){
+            const checkExistentUser = container.resolve(CheckExistentUser);
+            const existenUser = await checkExistentUser.execute({...user});
+            if(existenUser instanceof ServerError)
+                return response.status(existenUser.code)
+                .json({
+                    message: existenUser.message,
+                });
+        }
+
+        const updateUser = container.resolve(UpdateUser);
+
+        const newUser = await updateUser.execute(id, user);
+
+        if(newUser instanceof ServerError)
+            return response.status(newUser.code).json({
+                message: newUser.message,
+            });
+
+        return response.status(200).json({
+            data: {
+                newUser,
+            }
+        });
+
     }
 }

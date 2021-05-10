@@ -1,6 +1,7 @@
 export default {
     INTERNAL_SERVER_ERROR: 'The API is not responding due internal problems, plaese try access latter',
     CREATE_ACCOUNT_ERROR: 'An error occured during account creation',
+    UPDATE_ACCOUNT_ERROR: 'An error occured during account update',
     WEAK_PASSWORD: 'The password does not have minimum requirement',
     EXISTENT_USER: 'User already exist',
     UNEXISTENT_USER: 'User does not exist or already had been deleted',

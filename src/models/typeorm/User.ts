@@ -11,9 +11,6 @@ export default class User {
     readonly id: string;
 
     @Column('varchar')
-    name: string;
-
-    @Column('varchar')
     username: string;
 
     @Column('varchar')
@@ -29,7 +26,7 @@ export default class User {
     @Column('smallint')
     folders_quantity: number;
 
-    @OneToOne(type => RootFolder, user => User, { eager: true })
+    @OneToOne(type => RootFolder, user => User, { eager: false})
     @JoinColumn({name: 'id', referencedColumnName: 'user_id'})
     rootFolder: RootFolder;
 

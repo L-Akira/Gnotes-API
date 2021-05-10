@@ -5,7 +5,6 @@ import IuuidProvider from '@shared/container/providers/UuidProvider/model/IuuidP
 import { IFolderDTO } from '@shared/dtos';
 import ServerError from '@shared/errors/ServerError';
 import { classToClass } from 'class-transformer';
-import _ from 'lodash';
 import { inject, injectable } from 'tsyringe';
 
 @injectable()

@@ -12,7 +12,6 @@ export default class TypeormProvider implements IORMProvider {
       const userIntance = this.userRepository.create(
         {
           id,
-          name: user.name,
           email: user.email,
           password: user.password,
           username: user.username,
@@ -24,8 +23,12 @@ export default class TypeormProvider implements IORMProvider {
       return this.userRepository.save(userIntance);
     }
 
-    public async getUser(data: ISearchUserDTO): Promise<User | undefined> {
-        return this.userRepository.findAndRelate({ ...data });
+    public async getUser(data: ISearchUserDTO, attachRoot?: boolean): Promise<User | undefined> {
+        if(attachRoot)
+          return this.userRepository.findAndRelate({ ...data });
+
+        const finded = await this.userRepository.find({ where: {...data} });
+        return finded[0];
     }
 
     public async getRepeatedUser(data: ISearchUserDTO): Promise<User[]> {
@@ -56,5 +59,9 @@ export default class TypeormProvider implements IORMProvider {
       } catch (err) {
         return false;
       } 
+    }
+
+    public async updateUser(user: User): Promise<User> {
+      return this.userRepository.save(user);
     }
 }
